@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b5cab">
+<title>Okan Park</title>
+<style>
+  :root {
+    --bg: #f4f6f9; --card: #ffffff; --text: #14202e; --muted: #5d6b7c; --line: #dde3ea;
+    --brand: #0b5cab; --brand-text: #ffffff;
+    --free: #1a7f4b; --free-bg: #e2f4ea;
+    --busy: #c0392b; --busy-bg: #fbe6e3;
+    --hold: #b26a00; --hold-bg: #fdf0d8;
+    --mine: #0b5cab; --mine-bg: #e0eefc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1620; --card: #17222f; --text: #e8eef5; --muted: #93a3b6; --line: #2a3a4b;
+      --brand: #4d9de8; --brand-text: #08121d;
+      --free: #5fd394; --free-bg: #17382a;
+      --busy: #ff8a7a; --busy-bg: #402320;
+      --hold: #f2b45a; --hold-bg: #3d2f14;
+      --mine: #7dbaf5; --mine-bg: #172f49;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 480px; margin: 0 auto; padding: 16px 16px 40px; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.2px; }
+  .sub { color: var(--muted); font-size: 13px; margin: 0; }
+  .live { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  .live.ok .dot { background: var(--free); }
+  .live.stale .dot { background: var(--hold); }
+  .live.off .dot { background: var(--busy); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+  .hero { text-align: center; }
+  .hero .num { font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: -2px; }
+  .hero .lbl { color: var(--muted); margin-top: 4px; }
+  .zones { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .zones .card { margin: 0; }
+  .zname { font-weight: 600; }
+  .zfree { font-size: 28px; font-weight: 700; margin: 2px 0 8px; }
+  .zfree small { font-size: 14px; font-weight: 400; color: var(--muted); }
+  .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--free); transition: width .4s; }
+  .bar > i.mid { background: var(--hold); } .bar > i.low { background: var(--busy); }
+  h2 { font-size: 15px; margin: 0 0 10px; }
+  .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
+  .spot { border: 1.5px solid transparent; border-radius: 10px; padding: 10px 0; text-align: center;
+          font-weight: 600; font-size: 15px; background: var(--line); color: var(--text); font-family: inherit; }
+  .spot small { display: block; font-weight: 400; font-size: 11px; opacity: .85; }
+  .spot.free { background: var(--free-bg); color: var(--free); cursor: pointer; }
+  .spot.occupied { background: var(--busy-bg); color: var(--busy); cursor: default; }
+  .spot.held { background: var(--hold-bg); color: var(--hold); cursor: default; }
+  .spot.mine { background: var(--mine-bg); color: var(--mine); border-color: var(--mine); cursor: default; }
+  .spot.sel { border-color: var(--free); box-shadow: 0 0 0 2px var(--free-bg); }
+  .zlabel { font-size: 12px; color: var(--muted); margin: 8px 0 4px; }
+  .target { font-size: 20px; font-weight: 700; margin: 2px 0 12px; }
+  .target span { font-size: 14px; font-weight: 400; color: var(--muted); }
+  button.main { width: 100%; padding: 14px; border: 0; border-radius: 12px; background: var(--brand);
+                color: var(--brand-text); font-size: 16px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  button.main:active { transform: scale(.98); }
+  button.ghost { width: 100%; margin-top: 8px; padding: 12px; border-radius: 12px; border: 1px solid var(--line);
+                 background: transparent; color: var(--text); font-size: 15px; font-family: inherit; cursor: pointer; }
+  .link { background: none; border: 0; color: var(--brand); padding: 0; font: inherit; cursor: pointer; text-decoration: underline; }
+  .msg { color: var(--busy); font-size: 14px; margin-top: 8px; min-height: 1em; }
+  .count { font-size: 40px; font-weight: 700; color: var(--mine); font-variant-numeric: tabular-nums; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .legend b { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  footer { color: var(--muted); font-size: 12px; text-align: center; margin-top: 16px; }
+  .empty { text-align: center; color: var(--muted); padding: 24px 0; }
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Okan Park">
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Okan Park</h1>
+      <p class="sub">Find. Park. Move smarter.</p>
+    </div>
+    <div class="live" id="live"><span class="dot"></span><span id="liveText">Connecting…</span></div>
+  </header>
+  <div id="app"><div class="card empty">Loading parking data…</div></div>
+  <footer id="foot"></footer>
+</main>
+
+<script>
+// ===== Settings =====
+const DB_URL = "https://smart-parking-60a5c-default-rtdb.europe-west1.firebasedatabase.app";
+// Spots ordered from nearest to farthest from the entrance. Edit to match the maquette.
+const NEAREST_ORDER = ["A1", "B1", "A2", "B2", "A3", "B3", "A4", "B4"];
+const RESERVE_MINUTES = 10;
+const STALE_AFTER_S = 90;   // no update for this long => show a warning
+
+// ===== Helpers =====
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const app = document.getElementById("app");
+
+function getDeviceId() {
+  try {
+    let id = localStorage.getItem("okanpark-device");
+    if (!id) { id = "d" + Math.random().toString(36).slice(2, 10); localStorage.setItem("okanpark-device", id); }
+    return id;
+  } catch (e) { return "d-session-" + Math.random().toString(36).slice(2, 8); }
+}
+const DEVICE = getDeviceId();
+
+let parking = null, reservations = {}, selected = null, errorMsg = "", lastOk = 0, online = false, lastError = "";
+
+// ===== Data =====
+async function getJson(path) {
+  const r = await fetch(DB_URL + path + ".json", { cache: "no-store" });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+async function refresh() {
+  try {
+    const [p, r] = await Promise.all([getJson("/parking"), getJson("/reservations")]);
+    parking = p; reservations = r || {}; online = true; lastOk = Date.now();
+  } catch (e) { online = false; lastError = String((e && e.message) || e); }
+  render();
+}
+let t = null;
+const soon = () => { clearTimeout(t); t = setTimeout(refresh, 150); };
+
+function startLive() {
+  try {
+    const es = new EventSource(DB_URL + "/.json");
+    es.addEventListener("put", soon);
+    es.addEventListener("patch", soon);
+  } catch (e) { /* polling below still works */ }
+  setInterval(refresh, 5000);
+  setInterval(render, 1000);
+  refresh();
+}
+
+// ===== Logic =====
+function spotStatus(id) {
+  const s = parking && parking.spots && parking.spots[id];
+  if (!s) return null;
+  if (s.occupied) return "occupied";
+  const r = reservations[id];
+  if (r && r.until > Date.now()) return r.by === DEVICE ? "mine" : "held";
+  return "free";
+}
+function myReservation() {
+  for (const id in reservations) {
+    const r = reservations[id];
+    if (r && r.by === DEVICE && r.until > Date.now()) return { id, until: r.until };
+  }
+  return null;
+}
+function nearestFree() {
+  const all = Object.keys((parking && parking.spots) || {});
+  const ordered = NEAREST_ORDER.filter(id => all.includes(id)).concat(all.filter(id => !NEAREST_ORDER.includes(id)));
+  return ordered.find(id => spotStatus(id) === "free") || null;
+}
+async function reserve(id) {
+  errorMsg = "";
+  try {
+    await refreshQuiet();
+    if (spotStatus(id) !== "free") { errorMsg = "Spot " + id + " was just taken. Pick another one."; selected = null; return render(); }
+    if (myReservation()) { errorMsg = "You already have a reservation."; return render(); }
+    const r = await fetch(DB_URL + "/reservations/" + encodeURIComponent(id) + ".json", {
+      method: "PUT", body: JSON.stringify({ by: DEVICE, until: Date.now() + RESERVE_MINUTES * 60000 })
+    });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    selected = null;
+  } catch (e) { errorMsg = "Couldn't reserve. Check your connection and try again."; }
+  await refresh();
+}
+async function cancel(id) {
+  try { await fetch(DB_URL + "/reservations/" + encodeURIComponent(id) + ".json", { method: "DELETE" }); } catch (e) {}
+  await refresh();
+}
+async function refreshQuiet() {
+  const r = await getJson("/reservations"); reservations = r || {};
+  parking = await getJson("/parking");
+}
+
+// ===== UI =====
+function zoneStats(zone) {
+  let free = 0, total = 0;
+  const spots = (parking && parking.spots) || {};
+  for (const id in spots) if (spots[id].zone === zone) { total++; if (spotStatus(id) === "free") free++; }
+  return { free, total };
+}
+function spotBtn(id) {
+  const st = spotStatus(id);
+  const cls = st === "free" ? (selected === id ? "free sel" : "free") : st === "occupied" ? "occupied" : st === "mine" ? "mine" : "held";
+  const label = { free: "Free", occupied: "Taken", held: "Held", mine: "Yours" }[st];
+  return `<button class="spot ${cls}" data-spot="${esc(id)}" ${st === "free" ? "" : "tabindex='-1'"}>${esc(id)}<small>${label}</small></button>`;
+}
+function fmt(ms) { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+
+function render() {
+  const live = document.getElementById("live"), liveText = document.getElementById("liveText");
+  const age = parking && parking.lastUpdate ? (Date.now() - parking.lastUpdate) / 1000 : null;
+  if (!online) { live.className = "live off"; liveText.textContent = "Offline"; }
+  else if (age !== null && age > STALE_AFTER_S) { live.className = "live stale"; liveText.textContent = "No recent updates"; }
+  else { live.className = "live ok"; liveText.textContent = "Live"; }
+  document.getElementById("foot").textContent = age !== null ? "Sensors updated " + (age < 60 ? Math.round(age) + "s" : Math.round(age / 60) + " min") + " ago" : "";
+
+  if (!parking || !parking.spots) {
+    app.innerHTML = `<div class="card empty">${online ? "Waiting for the parking sensors to report…" : "Can't reach the server. Retrying…"}${online ? "" : `<div class="sub" style="margin-top:8px">Reason: ${esc(lastError)}</div>`}</div>`;
+    return;
+  }
+  const ids = Object.keys(parking.spots).sort();
+  const zones = [...new Set(ids.map(i => parking.spots[i].zone))].sort();
+  const totalFree = ids.filter(i => spotStatus(i) === "free").length;
+  const mine = myReservation();
+  const target = selected && spotStatus(selected) === "free" ? selected : nearestFree();
+  if (selected && spotStatus(selected) !== "free") selected = null;
+
+  const zonesHtml = zones.map(z => {
+    const { free, total } = zoneStats(z);
+    const pct = total ? Math.round(free / total * 100) : 0;
+    const cls = pct > 40 ? "" : pct > 0 ? "mid" : "low";
+    return `<div class="card"><div class="zname">Zone ${esc(z)}</div>
+      <div class="zfree">${free}<small> / ${total} free</small></div>
+      <div class="bar"><i class="${cls}" style="width:${pct}%"></i></div></div>`;
+  }).join("");
+
+  const gridHtml = zones.map(z => `<div class="zlabel">Zone ${esc(z)}</div><div class="row">` +
+    ids.filter(i => parking.spots[i].zone === z).map(spotBtn).join("") + `</div>`).join("");
+
+  let actionHtml;
+  if (mine) {
+    actionHtml = `<div class="card"><h2>Your reservation</h2>
+      <div class="target">Spot ${esc(mine.id)} <span>Zone ${esc(parking.spots[mine.id] ? parking.spots[mine.id].zone : "")}</span></div>
+      <div class="count">${fmt(mine.until - Date.now())}</div>
+      <div class="sub">Arrive before the timer ends, or the spot is released.</div>
+      <button class="ghost" data-cancel="${esc(mine.id)}">Cancel reservation</button></div>`;
+  } else if (target) {
+    actionHtml = `<div class="card"><h2>${selected ? "Selected spot" : "Nearest free spot"}</h2>
+      <div class="target">Spot ${esc(target)} <span>Zone ${esc(parking.spots[target].zone)}</span></div>
+      <button class="main" data-reserve="${esc(target)}">Reserve for ${RESERVE_MINUTES} minutes</button>
+      ${selected ? `<div style="margin-top:8px;text-align:center"><button class="link" data-nearest>Use nearest instead</button></div>` : `<div class="sub" style="margin-top:8px;text-align:center">Or tap any free spot below to choose it.</div>`}
+      <div class="msg">${esc(errorMsg)}</div></div>`;
+  } else {
+    actionHtml = `<div class="card"><h2>Parking is full</h2><div class="sub">Check back in a few minutes. This page updates by itself.</div></div>`;
+  }
+
+  app.innerHTML = `
+    <div class="card hero"><div class="num">${totalFree}</div><div class="lbl">free spaces right now</div></div>
+    <div class="zones">${zonesHtml}</div>
+    ${actionHtml}
+    <div class="card"><h2>All spots</h2>${gridHtml}
+      <div class="legend"><span><b style="background:var(--free)"></b>Free</span><span><b style="background:var(--busy)"></b>Taken</span><span><b style="background:var(--hold)"></b>Held</span><span><b style="background:var(--mine)"></b>Yours</span></div></div>`;
+
+  // clean up my own expired reservation
+  for (const id in reservations) { const r = reservations[id]; if (r && r.by === DEVICE && r.until <= Date.now()) cancel(id); }
+}
+
+app.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.reserve) reserve(b.dataset.reserve);
+  else if (b.dataset.cancel) cancel(b.dataset.cancel);
+  else if (b.hasAttribute("data-nearest")) { selected = null; errorMsg = ""; render(); }
+  else if (b.dataset.spot && b.classList.contains("free")) { selected = b.dataset.spot; errorMsg = ""; render(); }
+});
+
+startLive();
+</script>
+<script>
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
